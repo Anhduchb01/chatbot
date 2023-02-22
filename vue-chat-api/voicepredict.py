@@ -18,6 +18,7 @@ def predictVoice(file):
     
 
 # pad input values and return pt tensor
+    print(audio_input)
     input_values = processor(audio_input, sampling_rate=sample_rate, return_tensors="pt").input_values
 
     # retrieve logits & take argmax

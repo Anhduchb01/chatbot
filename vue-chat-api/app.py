@@ -6,14 +6,27 @@ from chatpredict import predict
 app = Flask(__name__)
 from translate import translate_vi_en,translate_en_vi
 from voicepredict import predictVoice
-from testvoice import predict
+from testvoice import predictvoice1
 import mimetypes
 import soundfile as sf
 import io
 from werkzeug.utils import secure_filename
 import os
 from pydub import AudioSegment
-app.config['UPLOAD_FOLDER']=r'C:\Users\Admin\Desktop\PROJECT III\chatbot\vue-chat-api\audio-test'
+import numpy as np
+import wave
+from scipy.io import wavfile
+import librosa
+import array
+app.config['UPLOAD_FOLDER'] = os.path.join(
+    app.instance_path, 
+    'uploads'
+)
+try: 
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+except: 
+    pass 
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 @app.route("/")
 # @cross_origin(origin='*')
 def hello_world():
@@ -43,39 +56,53 @@ def predictvoice():
 @app.route("/predictTest",methods=['POST'])
 @cross_origin()
 def predictvoiceTest():
-    print('ok')
-    file = request.files['file']
-    # determine format of uploaded file based on MIME type
-    # file_mime_type = mimetypes.guess_type(file.filename)[0]
-    # if file_mime_type == 'audio/wav':
-    #     file_format = 'WAV'
-    # elif file_mime_type == 'audio/flac':
-    #     file_format = 'FLAC'
-    # elif file_mime_type == 'audio/ogg':
-    #     file_format = 'OGG'
-    # else:
-    #     # unrecognized file format
-    #     return jsonify({'error': 'Unrecognized file format'})
-    # # read audio data from uploaded file using soundfile
-    # print(file)
-    # print(file_format)
-    # with io.BytesIO() as f:
-    #     file.save(f)
-    #     f.seek(0)
-    #     data, samplerate = sf.read(f, format=file_format)
-    # file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'audio1.webm'))
-    print(file)
-    webm_file = os.path.join(app.config['UPLOAD_FOLDER'], 'audio1.webm')
-    audio = AudioSegment.from_file(file, format="wav")
+    # file = request.files.get('audio')
+    # if file and file.filename != '': 
+    #     dest = os.path.join(
+    #         app.config['UPLOAD_FOLDER'], 
+    #         secure_filename(file.filename)
+    #     )
+    #     # Save the file on the server.
+    #     file.save(dest)
+        
+    #     # Load the file by filename using librosa.
+    #     y,sr = librosa.load(dest)
+    #     print('y',y)
+    #     print('sr',sr)
+        
+    # print('ok')
+    audio = request.files['audio']
     print(audio)
-    # Convert the WebM file to WAV format
-    wav_file = os.path.join(app.config['UPLOAD_FOLDER'], 'audio2.wav')
-    audio.export(wav_file, format="wav")
-    data, samplerate = sf.read(audio)
-    print(data)
-    transcription = predict(data)
-    
-    response = {"message": transcription}
+    # chunk_size = 1024  # read 1KB at a time
+    # audio_data = bytearray()
+    # while True:
+    #     chunk = audio.read(chunk_size)
+    #     if not chunk:
+    #         break
+    #     audio_data.extend(chunk)
+
+    audio_file = io.BytesIO(audio.read())
+    audio_data = AudioSegment.from_file(audio_file, format='raw', frame_rate=16000, channels=1, sample_width=1)
+    print(audio_data)
+    # output_file = "audio-test/output.wav"
+
+# export the audio data to a WAV file
+    # audio_data.export(output_file, format="wav")
+    # get audio data as numpy array
+    # ok = sf.read(audio_data)
+    print(audio_data.sample_width)
+    numpy_data = audio_data.get_array_of_samples()
+    int_data = array.array('i', numpy_data).tolist()
+    print(int_data)
+    normalized_data = np.array(int_data) / (2**7)
+    print(normalized_data)
+# convert audio data to float64 type
+    float_data = normalized_data.astype(np.float64)
+    print(float_data)
+    print(float_data.shape)
+    transcription = predictvoice1(float_data)
+    print(transcription)
+    response = {"message": 'ok'}
     return jsonify(response)
 
 if __name__ =='__main__':
