@@ -4,3 +4,4 @@ streamlit_webrtc
 transformers
 torch
 soundfile
+sacremoses

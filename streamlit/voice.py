@@ -53,9 +53,10 @@ def main():
 			break
 
 	audio_buffer = st.session_state["audio_buffer"]
-	print(audio_buffer)
+	
 	if not webrtc_ctx.state.playing and len(audio_buffer) > 0:
 		st.info("Writing wav to disk")
+		print(audio_buffer)
 		audio_buffer.export("temp.wav", format="wav")
 
 		# Reset
